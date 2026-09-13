@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{color-scheme:light dark}
+  body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<title>Maki Spec Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap">
+<style>
+  :root{
+    --ink:#101518; --paper:#ECEEEE; --raised:#F6F7F7;
+    --rule:#C6CDCE; --rule-soft:#D9DEDE;
+    --accent:#0A6E7D; --accent-dim:#0A6E7D33; --accent-wash:#0A6E7D12;
+    --signal:#B85E12; --muted:#5A6568;
+    --cell-idle:#D3D9D9; --cell-queued:#9FB3B5; --cell-run:#0A6E7D; --cell-done:#0A6E7D4D;
+    --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ink:#E4E9E9; --paper:#0E1315; --raised:#171E20;
+      --rule:#2C3739; --rule-soft:#222B2D;
+      --accent:#56C2CF; --accent-dim:#56C2CF3D; --accent-wash:#56C2CF14;
+      --signal:#E0913F; --muted:#8C999C;
+      --cell-idle:#232D2F; --cell-queued:#3E5052; --cell-run:#56C2CF; --cell-done:#56C2CF4D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#E4E9E9; --paper:#0E1315; --raised:#171E20;
+    --rule:#2C3739; --rule-soft:#222B2D;
+    --accent:#56C2CF; --accent-dim:#56C2CF3D; --accent-wash:#56C2CF14;
+    --signal:#E0913F; --muted:#8C999C;
+    --cell-idle:#232D2F; --cell-queued:#3E5052; --cell-run:#56C2CF; --cell-done:#56C2CF4D;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .sheet{max-width:900px;margin:0 auto;padding:44px 28px 88px}
+  .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase}
+
+  /* ---------- masthead ---------- */
+  .masthead{border-bottom:3px solid var(--accent);padding-bottom:22px}
+  .status{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;color:var(--muted);margin-bottom:26px}
+  .status .live{color:var(--signal);display:inline-flex;align-items:center;gap:7px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);flex:none;animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .theme-btn{margin-left:auto;font:inherit;font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    background:none;border:1px solid var(--rule);color:var(--muted);padding:5px 11px;cursor:pointer;border-radius:2px;transition:border-color .18s,color .18s}
+  .theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .name{font-family:var(--display);font-variation-settings:"wdth" 112,"wght" 700;
+    font-size:clamp(44px,8.5vw,76px);line-height:.94;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .legal{color:var(--muted);margin:0 0 20px;letter-spacing:.12em}
+  .tagline{font-size:20px;max-width:34ch;margin:0 0 30px}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 30px}
+  .facts div{border-top:1px solid var(--rule-soft);padding-top:9px}
+  .facts dt{color:var(--muted);margin-bottom:3px}
+  .facts dd{margin:0;font-family:var(--mono);font-size:13px;line-height:1.45}
+
+  /* ---------- fleet band ---------- */
+  .fleet{margin-top:34px;border:1px solid var(--rule-soft);background:var(--raised)}
+  .fleet-bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--rule-soft);color:var(--muted)}
+  .fleet-bar .key{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:9px;height:9px;flex:none}
+  .sw-run{background:var(--cell-run)} .sw-done{background:var(--cell-done)} .sw-idle{background:var(--cell-idle)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(13px,1fr));gap:4px;padding:16px 14px}
+  .cell{aspect-ratio:1;background:var(--cell-idle);transition:background-color .5s ease}
+  .cell[data-s="queued"]{background:var(--cell-queued)}
+  .cell[data-s="run"]{background:var(--cell-run)}
+  .cell[data-s="done"]{background:var(--cell-done)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+  .sec-head h2{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);margin:0;flex:none}
+  .sec-head::after{content:"";flex:1;height:1px;background:var(--rule)}
+  .lede{font-size:19px;max-width:62ch;margin:0}
+
+  /* ---------- figures ---------- */
+  .figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
+  .fig{padding:4px 20px;border-left:1px solid var(--rule)}
+  .fig:first-child{padding-left:0;border-left:0}
+  .fig b{display:block;font-family:var(--display);font-variation-settings:"wdth" 92,"wght" 600;
+    font-size:38px;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .fig span{display:block;color:var(--muted);margin-top:7px;line-height:1.5}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px}
+  .filters button{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    background:none;border:1px solid var(--rule);color:var(--muted);padding:6px 11px;cursor:pointer;
+    border-radius:2px;transition:border-color .18s,color .18s,background-color .18s}
+  .filters button:hover{border-color:var(--accent);color:var(--accent)}
+  .filters button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-wash)}
+
+  /* ---------- work units ---------- */
+  .unit{display:grid;grid-template-columns:132px 1fr;gap:0 30px;padding:26px 0;
+    border-top:1px solid var(--rule-soft);transition:background-color .2s}
+  .unit:first-of-type{border-top:1px solid var(--rule)}
+  .unit.is-hidden{display:none}
+  .unit:hover{border-top-color:var(--accent)}
+  .unit:hover h3{color:var(--accent)}
+  .unit h3{transition:color .18s}
+  .tag{color:var(--accent);font-weight:500}
+  .unit h3{font-family:var(--display);font-variation-settings:"wdth" 100,"wght" 600;
+    font-size:23px;line-height:1.2;margin:0 0 9px;letter-spacing:-.01em;text-wrap:balance}
+  .unit p{margin:0 0 12px;max-width:60ch}
+  .result{border-left:2px solid var(--accent);padding-left:13px;color:var(--ink);font-size:16px}
+  .result b{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent);display:block;margin-bottom:2px;font-weight:600}
+  .spec{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px}
+  .spec b{color:var(--ink);font-weight:500}
+  .drawer-btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    background:none;border:0;border-bottom:1px solid var(--rule);color:var(--muted);padding:4px 0;
+    margin-top:14px;cursor:pointer;transition:color .18s,border-color .18s}
+  .drawer-btn:hover{color:var(--accent);border-color:var(--accent)}
+  .chev{display:inline-block;transition:transform .25s ease}
+  .drawer-btn[aria-expanded="true"] .chev{transform:rotate(45deg)}
+  .drawer-btn[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
+  .drawer{margin-top:0;max-height:0;opacity:0;overflow:hidden;padding:0 16px;background:var(--raised);
+    border:0 solid var(--rule-soft);transition:max-height .3s ease,opacity .22s ease,padding .3s ease,margin-top .3s ease}
+  .drawer.open{margin-top:13px;max-height:340px;opacity:1;padding:14px 16px;border-width:1px}
+  .drawer ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+  .drawer li{font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--muted);
+    display:grid;grid-template-columns:auto 1fr;gap:10px}
+  .drawer li::before{content:"\2014";color:var(--accent)}
+
+  /* ---------- capability table ---------- */
+  .cap-wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:520px}
+  th,td{text-align:left;padding:13px 16px 13px 0;border-top:1px solid var(--rule-soft);vertical-align:top}
+  thead th{border-top:1px solid var(--rule);color:var(--muted);font-weight:400}
+  tbody tr th,tbody tr td{transition:color .18s,border-color .18s}
+  tbody tr:hover th{color:var(--accent)}
+  tbody tr:hover td{color:var(--ink)}
+  tbody tr:hover th,tbody tr:hover td{border-top-color:var(--accent)}
+  tbody th{font-family:var(--display);font-variation-settings:"wdth" 92,"wght" 600;
+    font-size:15px;white-space:nowrap;padding-right:34px}
+  td{font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--muted)}
+
+  /* ---------- method ---------- */
+  .method{background:var(--raised);border:1px solid var(--rule-soft);padding:30px 32px}
+  .method ol{margin:0;padding:0;list-style:none;display:grid;gap:19px}
+  .method li{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline}
+  .method code{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--accent);
+    border:1px solid var(--rule);padding:2px 6px;white-space:nowrap}
+  .method p{margin:0;max-width:58ch}
+  .method strong{font-weight:600}
+
+  /* ---------- about ---------- */
+  .about{display:grid;grid-template-columns:215px 1fr;gap:0 36px}
+  .path{list-style:none;margin:0;padding:2px 0 0 18px;display:grid;gap:22px;
+    border-left:1px solid var(--rule);align-content:start}
+  .path li{position:relative;font-size:14.5px;line-height:1.5;color:var(--muted)}
+  .path li::before{content:"";position:absolute;left:-22px;top:7px;width:7px;height:7px;background:var(--accent)}
+  .path .step{display:block;color:var(--accent);margin-bottom:3px}
+  .about-body p{margin:0 0 16px;max-width:62ch}
+  .about-body p:last-child{margin-bottom:0}
+  .about-body .close{border-left:2px solid var(--accent);padding-left:14px}
+  .about-body .personal{color:var(--muted);font-size:15.5px;margin-top:20px}
+
+  /* ---------- progress + rail nav ---------- */
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--accent);z-index:20}
+  .rail{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:grid;gap:13px;z-index:15}
+  .rail a{display:flex;align-items:center;justify-content:flex-end;gap:9px;text-decoration:none;padding:2px 0}
+  .rail .mark{width:7px;height:7px;background:var(--rule);flex:none;transition:background-color .2s,transform .2s}
+  .rail a:hover .mark{background:var(--accent)}
+  .rail a[aria-current="true"] .mark{background:var(--accent);transform:scale(1.5)}
+  .rail .rl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);opacity:0;transition:opacity .2s;white-space:nowrap}
+  .rail a:hover .rl,.rail a:focus-visible .rl{opacity:1}
+  @media (max-width:1140px){.rail{display:none}}
+
+  /* ---------- filter feedback ---------- */
+  .shown{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 2px;font-variant-numeric:tabular-nums}
+
+  /* ---------- fleet hover readout ---------- */
+  .probe{margin-left:auto;color:var(--accent);font-variant-numeric:tabular-nums}
+  .cell{cursor:crosshair}
+  .cell:hover{outline:1px solid var(--accent);outline-offset:1px}
+
+  /* ---------- project diagrams ---------- */
+  .viz{margin:16px 0 14px;padding:0}
+  .viz svg{display:block;width:100%;max-width:620px;height:auto;color:var(--ink);overflow:visible}
+  .viz .bx{fill:none;stroke:var(--rule);stroke-width:1}
+  .viz .ln{stroke:var(--rule);stroke-width:1;fill:none}
+  .viz .ah{fill:var(--rule)}
+  .viz .acc{stroke:var(--accent)}
+  .viz .acf{fill:var(--accent)}
+  .viz .t{fill:currentColor;font-family:var(--mono);font-size:11px}
+  .viz .s{fill:currentColor;font-family:var(--mono);font-size:9px}
+  .viz .acct,.viz .acct2{fill:var(--accent);font-family:var(--mono);font-size:9px}
+  .viz .acct2{font-size:11px}
+  .viz figcaption{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--muted);
+    margin-top:9px;line-height:1.55;max-width:58ch}
+
+  /* ---------- pull quote ---------- */
+  .pull{margin:56px 0 0;border-top:2px solid var(--accent);border-bottom:1px solid var(--rule);padding:30px 0}
+  .pull p{font-size:clamp(22px,3.4vw,29px);line-height:1.32;margin:0 0 16px;max-width:22ch;
+    letter-spacing:-.01em;text-wrap:balance}
+  .pull cite{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);font-style:normal;display:block}
+
+  /* ---------- cta + contact ---------- */
+  .cta{border:1px solid var(--accent);background:var(--accent-wash);padding:28px 30px;
+    display:flex;flex-wrap:wrap;gap:22px;align-items:center;justify-content:space-between}
+  .cta h3{font-family:var(--display);font-variation-settings:"wdth" 100,"wght" 600;
+    font-size:22px;margin:0 0 5px;letter-spacing:-.01em}
+  .cta p{margin:0;color:var(--muted);font-size:15.5px;max-width:46ch}
+  .cta-actions{display:flex;flex-wrap:wrap;gap:9px}
+  .btn{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    padding:11px 17px;border-radius:2px;cursor:pointer;text-decoration:none;white-space:nowrap;
+    border:1px solid var(--accent);transition:opacity .18s,background-color .18s,color .18s}
+  .btn-solid{background:var(--accent);color:var(--paper)}
+  .btn-solid:hover{opacity:.85}
+  .btn-ghost{background:none;color:var(--accent);font-family:var(--mono)}
+  .btn-ghost:hover{background:var(--accent-dim)}
+
+  .contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 30px}
+  .contact div{border-top:1px solid var(--rule-soft);padding-top:10px}
+  .contact dt{color:var(--muted);margin-bottom:4px}
+  .contact dd{margin:0;font-family:var(--mono);font-size:13.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .copy-mail{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+    background:none;border:1px solid var(--rule);color:var(--muted);padding:3px 7px;cursor:pointer;
+    border-radius:2px;transition:border-color .18s,color .18s}
+  .copy-mail:hover{border-color:var(--accent);color:var(--accent)}
+
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--rule);color:var(--muted);max-width:64ch}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  @media (max-width:640px){
+    .sheet{padding:30px 18px 64px}
+    .unit{grid-template-columns:1fr;gap:10px}
+    .fig{padding:14px 0;border-left:0;border-top:1px solid var(--rule-soft)}
+    .fig:first-child{border-top:0;padding-top:4px}
+    .method{padding:24px 20px}
+    .method li{grid-template-columns:1fr;gap:7px}
+    .method code{justify-self:start}
+    .cta{padding:22px 20px}
+    .about{grid-template-columns:1fr;gap:26px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+
+<div class="progress" id="progress"></div>
+<nav class="rail" id="rail" aria-label="Page sections">
+  <a href="#summary"><span class="rl">Summary</span><span class="mark"></span></a>
+  <a href="#scale"><span class="rl">Scale</span><span class="mark"></span></a>
+  <a href="#work"><span class="rl">Work</span><span class="mark"></span></a>
+  <a href="#capabilities"><span class="rl">Capabilities</span><span class="mark"></span></a>
+  <a href="#method"><span class="rl">Method</span><span class="mark"></span></a>
+  <a href="#about"><span class="rl">About</span><span class="mark"></span></a>
+  <a href="#contact"><span class="rl">Contact</span><span class="mark"></span></a>
+</nav>
+
+<main class="sheet">
+
+  <header class="masthead">
+    <div class="status mono">
+      <span class="live"><span class="dot"></span>Available</span>
+      <span>Rev. 2026.09</span>
+      <button class="theme-btn" type="button" id="themeBtn">Dark</button>
+    </div>
+    <h1 class="name">Maki</h1>
+    <p class="legal mono">Mc Errol P. Juliano</p>
+    <p class="tagline">I build the internal tooling that content operations actually run on.</p>
+    <dl class="facts">
+      <div><dt class="mono">Focus</dt><dd>Automation &amp; internal tools</dd></div>
+      <div><dt class="mono">Base</dt><dd>Philippines &middot; UTC+8</dd></div>
+      <div><dt class="mono">Capacity</dt><dd>Flexible hours &middot; any overlap</dd></div>
+      <div><dt class="mono">Core stack</dt><dd>Python 3 &middot; Django &middot; MongoDB &middot; ADB</dd></div>
+    </dl>
+  </header>
+
+  <div class="fleet">
+    <div class="fleet-bar mono">
+      <span>Fleet scheduler &middot; illustrative</span>
+      <span class="key"><span class="swatch sw-run"></span>Running</span>
+      <span class="key"><span class="swatch sw-done"></span>Done</span>
+      <span class="key"><span class="swatch sw-idle"></span>Idle</span>
+      <span class="probe" id="probe">&nbsp;</span>
+    </div>
+    <div class="grid" id="grid" aria-hidden="true"></div>
+  </div>
+
+  <section id="summary">
+    <div class="sec-head"><h2>Summary</h2></div>
+    <p class="lede">Most of my work replaces something a team was doing by hand across hundreds of accounts: the daemons that drive device fleets, the scrapers that keep a master sheet honest, and the dashboards that let a manager see all of it without opening a terminal. I work fast and in the open &mdash; you get a running version early and we shape it from there.</p>
+  </section>
+
+  <section id="scale">
+    <div class="sec-head"><h2>Scale handled</h2></div>
+    <div class="figures">
+      <div class="fig"><b data-to="280" data-suffix="+">0</b><span>accounts under active automation</span></div>
+      <div class="fig"><b data-to="11">0</b><span>physical devices in one managed fleet</span></div>
+      <div class="fig"><b data-to="800">0</b><span>accounts on a daily scraping pipeline</span></div>
+      <div class="fig"><b data-to="13" data-suffix="k">0</b><span>lines in the largest single daemon</span></div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="sec-head"><h2>Selected work</h2></div>
+    <div class="filters" id="filters" role="group" aria-label="Filter work by domain">
+      <button type="button" data-f="all" aria-pressed="true">All seven</button>
+      <button type="button" data-f="mobile" aria-pressed="false">Mobile-orch</button>
+      <button type="button" data-f="data" aria-pressed="false">Data-pipe</button>
+      <button type="button" data-f="dash" aria-pressed="false">Dashboard</button>
+      <button type="button" data-f="infra" aria-pressed="false">Infra</button>
+      <button type="button" data-f="ai" aria-pressed="false">AI-pipe</button>
+      <button type="button" data-f="media" aria-pressed="false">Media</button>
+    </div>
+    <p class="shown" id="shown">Showing all 7</p>
+
+    <article class="unit" data-d="mobile">
+      <div class="mono tag">Mobile-orch</div>
+      <div>
+        <h3>Dual-Track Fleet Controller</h3>
+        <p>Drives roughly 280 accounts across two entirely different device backends &mdash; physical Android handsets over USB, and cloud instances over REST &mdash; from one scheduler.</p>
+        <figure class="viz"><svg viewBox="0 0 620 122" role="img" aria-label="A single scheduler branching over USB ADB to 11 handsets and over REST to cloud phones."><rect class="bx acc" x="0" y="45" width="118" height="30"/><text class="t acct2" x="59" y="63.5" text-anchor="middle">scheduler</text><polyline class="ln" points="118,60 148,60 148,22 244,22"/><polygon class="ah" points="244,18.5 244,25.5 250,22"/><polyline class="ln" points="118,60 148,60 148,98 244,98"/><polygon class="ah" points="244,94.5 244,101.5 250,98"/><text class="s" x="196" y="15" text-anchor="middle">USB / ADB</text><text class="s" x="196" y="113" text-anchor="middle">REST</text><rect class="bx" x="252" y="7" width="150" height="30"/><text class="t" x="327" y="25.5" text-anchor="middle">11 handsets</text><rect class="bx" x="252" y="83" width="150" height="30"/><text class="t" x="327" y="101.5" text-anchor="middle">cloud phones</text><text class="s" x="418" y="26">on-prem, USB-attached</text><text class="s" x="418" y="102">provisioned on demand</text><text class="acct" x="0" y="92">6 slots in parallel</text></svg><figcaption>One scheduler drives two unrelated device backends over different transports.</figcaption></figure>
+        <p class="result"><b>Result</b>One operator now covers what took two, and an interrupted run resumes instead of restarting.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Slot-based worker pool, six concurrent jobs, each with isolated device state</li>
+            <li>Slot-prefixed logging ([S0], [S1]) so a failure in parallel output is traceable in seconds</li>
+            <li>Run state persisted per account &mdash; a crash costs one job, not the batch</li>
+            <li>One scheduler abstracts both backends behind a common device interface</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3, ADB, vendor REST &middot; <b>Surface</b> CLI daemon</div>
+      </div>
+    </article>
+
+    <article class="unit" data-d="mobile">
+      <div class="mono tag">Mobile-orch</div>
+      <div>
+        <h3>Account Lifecycle Daemon</h3>
+        <p>Runs the full lifecycle on cloud devices &mdash; provision, assign proxy, set locale, install, register, warm, retire &mdash; as one resumable pipeline.</p>
+        <figure class="viz"><svg viewBox="0 0 620 90" role="img" aria-label="Six lifecycle stages in sequence with a return path marking every stage as re-runnable."><rect class="bx" x="0" y="18" width="90" height="30"/><text class="s" x="45" y="36.5" text-anchor="middle">provision</text><line class="ln" x1="90" y1="33" x2="100" y2="33"/><polygon class="ah" points="100,29.5 100,36.5 106,33"/><rect class="bx" x="106" y="18" width="90" height="30"/><text class="s" x="151" y="36.5" text-anchor="middle">proxy</text><line class="ln" x1="196" y1="33" x2="206" y2="33"/><polygon class="ah" points="206,29.5 206,36.5 212,33"/><rect class="bx" x="212" y="18" width="90" height="30"/><text class="s" x="257" y="36.5" text-anchor="middle">locale</text><line class="ln" x1="302" y1="33" x2="312" y2="33"/><polygon class="ah" points="312,29.5 312,36.5 318,33"/><rect class="bx" x="318" y="18" width="90" height="30"/><text class="s" x="363" y="36.5" text-anchor="middle">install</text><line class="ln" x1="408" y1="33" x2="418" y2="33"/><polygon class="ah" points="418,29.5 418,36.5 424,33"/><rect class="bx" x="424" y="18" width="90" height="30"/><text class="s" x="469" y="36.5" text-anchor="middle">register</text><line class="ln" x1="514" y1="33" x2="524" y2="33"/><polygon class="ah" points="524,29.5 524,36.5 530,33"/><rect class="bx" x="530" y="18" width="90" height="30"/><text class="s" x="575" y="36.5" text-anchor="middle">warm</text><polyline class="ln acc" points="575,48 575,68 45,68 45,54"/><polygon class="acf" points="41.5,54 48.5,54 45,48"/><text class="acct" x="310" y="82" text-anchor="middle">any stage re-runnable against one account</text></svg><figcaption>A linear pipeline where each stage can be replayed without restarting the account.</figcaption></figure>
+        <p class="result"><b>Result</b>A multi-step setup that took an operator most of an hour now runs unattended.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Unified handler covering 44 distinct app states, so a UI change breaks one branch not the flow</li>
+            <li>~13,000 lines in the main daemon, organised around a single base class</li>
+            <li>All machine-specific values isolated in one config module, never scattered inline</li>
+            <li>Every stage is independently re-runnable against an account mid-lifecycle</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3 &middot; <b>Surface</b> CLI daemon</div>
+      </div>
+    </article>
+
+    <article class="unit" data-d="data">
+      <div class="mono tag">Data-pipe</div>
+      <div>
+        <h3>Account Status Scraper</h3>
+        <p>Daily job that checks the standing of ~800 accounts and reconciles a master sheet against what it finds.</p>
+        <figure class="viz"><svg viewBox="0 0 620 98" role="img" aria-label="Cron triggers a scrape of 800 accounts into MongoDB, which reconciles a master sheet, with a skip-list feeding back into the scrape."><rect class="bx" x="0" y="20" width="96" height="30"/><text class="s" x="48" y="38.5" text-anchor="middle">cron</text><line class="ln" x1="96" y1="35" x2="120" y2="35"/><polygon class="ah" points="120,31.5 120,38.5 126,35"/><rect class="bx" x="126" y="20" width="104" height="30"/><text class="s" x="178" y="38.5" text-anchor="middle">scrape 800</text><line class="ln" x1="230" y1="35" x2="254" y2="35"/><polygon class="ah" points="254,31.5 254,38.5 260,35"/><rect class="bx" x="260" y="20" width="96" height="30"/><text class="s" x="308" y="38.5" text-anchor="middle">MongoDB</text><line class="ln" x1="356" y1="35" x2="380" y2="35"/><polygon class="ah" points="380,31.5 380,38.5 386,35"/><rect class="bx" x="386" y="20" width="96" height="30"/><text class="s" x="434" y="38.5" text-anchor="middle">reconcile</text><line class="ln" x1="482" y1="35" x2="506" y2="35"/><polygon class="ah" points="506,31.5 506,38.5 512,35"/><rect class="bx" x="512" y="20" width="108" height="30"/><text class="s" x="566" y="38.5" text-anchor="middle">master sheet</text><rect class="bx acc" x="126" y="68" width="104" height="22"/><text class="s acct2" x="178" y="82.5" text-anchor="middle">skip-list</text><polyline class="ln acc" points="178,68 178,56"/><polygon class="acf" points="174.5,56 181.5,56 178,50"/><text class="acct" x="244" y="83">retires dead accounts before they cost a request</text></svg><figcaption>The database is the source of truth; the sheet is reconciled against it, never trusted.</figcaption></figure>
+        <p class="result"><b>Result</b>A manual morning routine across a VA team became a job that finishes before anyone logs in.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Skip-list retires known-dead accounts so they stop burning requests every run</li>
+            <li>Separate backfill tooling repaired several months of bad historical entries</li>
+            <li>Writes to MongoDB as source of truth; the sheet is reconciled, never trusted</li>
+            <li>Runs on cron at a fixed UTC hour, with a queue consumer on a 5-minute cycle</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3, MongoDB, Sheets API &middot; <b>Surface</b> cron + CLI</div>
+      </div>
+    </article>
+
+    <article class="unit" data-d="dash">
+      <div class="mono tag">Dashboard</div>
+      <div>
+        <h3>Operations Dashboard</h3>
+        <p>Django app over the scraper's collections, giving managers per-account history, status rollups and inline edits in a browser.</p>
+        <figure class="viz"><svg viewBox="0 0 620 100" role="img" aria-label="MongoDB read by a Django app rendered to a manager browser, with a guarded write-back path to the database."><rect class="bx" x="0" y="20" width="190" height="30"/><text class="s" x="95" y="38.5" text-anchor="middle">MongoDB &middot; 6 collections</text><line class="ln" x1="190" y1="35" x2="234" y2="35"/><polygon class="ah" points="234,31.5 234,38.5 240,35"/><text class="s" x="215" y="28" text-anchor="middle">reads</text><rect class="bx" x="240" y="20" width="150" height="30"/><text class="s" x="315" y="38.5" text-anchor="middle">Django app</text><line class="ln" x1="390" y1="35" x2="434" y2="35"/><polygon class="ah" points="434,31.5 434,38.5 440,35"/><text class="s" x="415" y="28" text-anchor="middle">renders</text><rect class="bx" x="440" y="20" width="180" height="30"/><text class="s" x="530" y="38.5" text-anchor="middle">browser &middot; manager</text><polyline class="ln acc" points="530,50 530,76 95,76 95,56"/><polygon class="acf" points="91.5,56 98.5,56 95,50"/><text class="acct" x="312" y="91" text-anchor="middle">inline edits, guarded write-back</text></svg><figcaption>Managers read and correct account state without touching the spreadsheet.</figcaption></figure>
+        <p class="result"><b>Result</b>The spreadsheet stopped being the source of truth, and status checks stopped going through me.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Scoped as a self-contained app from day one &mdash; dropped into a larger platform without a rewrite</li>
+            <li>Reads six Mongo collections; writes back through a guarded edit path</li>
+            <li>Deployed to shared hosting over WSGI, no container infrastructure required</li>
+            <li>Schema documented alongside the code so the next developer starts from a map</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Django, MongoDB Atlas &middot; <b>Surface</b> internal web</div>
+      </div>
+    </article>
+
+    <article class="unit" data-d="infra">
+      <div class="mono tag">Infra</div>
+      <div>
+        <h3>Proxy Pool Sync</h3>
+        <p>Keeps a proxy vendor and a browser-profile manager in agreement &mdash; pulls current endpoints, matches them to profiles, and reports drift.</p>
+        <figure class="viz"><svg viewBox="0 0 620 100" role="img" aria-label="A proxy vendor API and a browser profile manager both feeding a match step that produces in-sync, drift-reported and dead-flagged outcomes."><rect class="bx" x="0" y="8" width="158" height="28"/><text class="s" x="79" y="25.5" text-anchor="middle">proxy vendor API</text><rect class="bx" x="0" y="62" width="158" height="28"/><text class="s" x="79" y="79.5" text-anchor="middle">profile manager</text><polyline class="ln" points="158,22 196,22 196,49 218,49"/><polygon class="ah" points="218,45.5 218,52.5 224,49"/><polyline class="ln" points="158,76 196,76 196,49 218,49"/><polygon class="ah" points="218,45.5 218,52.5 224,49"/><rect class="bx acc" x="230" y="33" width="92" height="32"/><text class="s acct2" x="276" y="52.5" text-anchor="middle">match</text><line class="ln" x1="322" y1="20" x2="404" y2="20"/><polygon class="ah" points="404,16.5 404,23.5 410,20"/><rect class="bx" x="416" y="6" width="190" height="26"/><text class="s" x="511" y="22.5" text-anchor="middle">in sync</text><line class="ln" x1="322" y1="49" x2="404" y2="49"/><polygon class="ah" points="404,45.5 404,52.5 410,49"/><rect class="bx" x="416" y="35" width="190" height="26"/><text class="s" x="511" y="51.5" text-anchor="middle">drift reported</text><line class="ln acc" x1="322" y1="78" x2="404" y2="78"/><polygon class="acf" points="404,74.5 404,81.5 410,78"/><rect class="bx acc" x="416" y="64" width="190" height="26"/><text class="s acct2" x="511" y="80.5" text-anchor="middle">dead &middot; flagged</text></svg><figcaption>Two vendor APIs with incompatible identifiers, reconciled into three outcomes.</figcaption></figure>
+        <p class="result"><b>Result</b>Dead proxies get flagged before a run trips over them, instead of after.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Reconciles two vendor APIs with incompatible identifiers for the same endpoint</li>
+            <li>Keeps sync state on disk so a partial run picks up where it stopped</li>
+            <li>Writes a plain-text report per run &mdash; diffable, no dashboard needed</li>
+            <li>Separate diagnostic mode for when a vendor's update endpoint misbehaves</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3, two vendor APIs &middot; <b>Surface</b> CLI + reports</div>
+      </div>
+    </article>
+
+    <article class="unit" data-d="ai">
+      <div class="mono tag">AI-pipe</div>
+      <div>
+        <h3>Batch Generation Pipeline</h3>
+        <p>Turns a written spec into a finished image or video set through a generation API, packaged so a non-technical operator runs it unsupervised.</p>
+        <figure class="viz"><svg viewBox="0 0 620 122" role="img" aria-label="A spec fanning out to four concurrent API calls under a cap of four, converging into a collect step and a finished pack."><rect class="bx" x="0" y="40" width="84" height="32"/><text class="s" x="42" y="59.5" text-anchor="middle">spec</text><polyline class="ln" points="84,56 118,56 118,23 158,23"/><polygon class="ah" points="152,19.5 152,26.5 158,23"/><rect class="bx" x="164" y="10" width="120" height="26"/><text class="s" x="224" y="26.5" text-anchor="middle">API call</text><polyline class="ln" points="284,23 320,23 320,56"/><polyline class="ln" points="84,56 118,56 118,49 158,49"/><polygon class="ah" points="152,45.5 152,52.5 158,49"/><rect class="bx" x="164" y="36" width="120" height="26"/><text class="s" x="224" y="52.5" text-anchor="middle">API call</text><polyline class="ln" points="284,49 320,49 320,56"/><polyline class="ln" points="84,56 118,56 118,75 158,75"/><polygon class="ah" points="152,71.5 152,78.5 158,75"/><rect class="bx" x="164" y="62" width="120" height="26"/><text class="s" x="224" y="78.5" text-anchor="middle">API call</text><polyline class="ln" points="284,75 320,75 320,56"/><polyline class="ln" points="84,56 118,56 118,101 158,101"/><polygon class="ah" points="152,97.5 152,104.5 158,101"/><rect class="bx" x="164" y="88" width="120" height="26"/><text class="s" x="224" y="104.5" text-anchor="middle">API call</text><polyline class="ln" points="284,101 320,101 320,56"/><text class="acct" x="124" y="114">cap 4</text><line class="ln" x1="320" y1="56" x2="356" y2="56"/><polygon class="ah" points="356,52.5 356,59.5 362,56"/><rect class="bx" x="368" y="40" width="120" height="32"/><text class="s" x="428" y="59.5" text-anchor="middle">collect</text><line class="ln" x1="488" y1="56" x2="524" y2="56"/><polygon class="ah" points="524,52.5 524,59.5 530,56"/><rect class="bx acc" x="536" y="40" width="84" height="32"/><text class="s acct2" x="578" y="59.5" text-anchor="middle">pack</text></svg><figcaption>Concurrent calls held under the provider&rsquo;s rate cap, then collected into one pack.</figcaption></figure>
+        <p class="result"><b>Result</b>A full content pack in one command instead of an afternoon of one-at-a-time prompting.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Concurrent batch calls with a cap that respects the provider's rate limits</li>
+            <li>Reference-image anchoring keeps one character consistent across an entire pack</li>
+            <li>Automatic download and naming &mdash; no manual file handling between steps</li>
+            <li>Shipped as a packaged skill, so the operator never sees the code</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3, REST, async batching &middot; <b>Surface</b> CLI + packaged skill</div>
+      </div>
+    </article>
+    <article class="unit" data-d="media">
+      <div class="mono tag">Media</div>
+      <div>
+        <h3>Device Metadata Injector</h3>
+        <p>Normalises a library of mixed-source footage: strips whatever inconsistent capture metadata each file arrived with, splices and re-encodes where needed, then writes one coherent device profile across the whole batch.</p>
+        <figure class="viz"><svg viewBox="0 0 620 110" role="img" aria-label="Source files pass through sanitize and splice steps into a profile injection driven by one shared config, producing output files."><rect class="bx" x="0" y="20" width="110" height="30"/><text class="s" x="55" y="38.5" text-anchor="middle">source files</text><line class="ln" x1="110" y1="35" x2="134" y2="35"/><polygon class="ah" points="134,31.5 134,38.5 140,35"/><rect class="bx" x="140" y="20" width="96" height="30"/><text class="s" x="188" y="38.5" text-anchor="middle">sanitize</text><line class="ln" x1="236" y1="35" x2="260" y2="35"/><polygon class="ah" points="260,31.5 260,38.5 266,35"/><rect class="bx" x="266" y="20" width="86" height="30"/><text class="s" x="309" y="38.5" text-anchor="middle">splice</text><line class="ln" x1="352" y1="35" x2="376" y2="35"/><polygon class="ah" points="376,31.5 376,38.5 382,35"/><rect class="bx acc" x="382" y="20" width="124" height="30"/><text class="s acct2" x="444" y="38.5" text-anchor="middle">inject profile</text><line class="ln" x1="506" y1="35" x2="530" y2="35"/><polygon class="ah" points="530,31.5 530,38.5 536,35"/><rect class="bx" x="536" y="20" width="84" height="30"/><text class="s" x="578" y="38.5" text-anchor="middle">output</text><rect class="bx acc" x="382" y="68" width="124" height="22"/><text class="s acct2" x="444" y="82.5" text-anchor="middle">profile keys</text><polyline class="ln acc" points="444,68 444,56"/><polygon class="acf" points="440.5,56 447.5,56 444,50"/><text class="acct" x="444" y="104" text-anchor="middle">one config, not per run</text></svg><figcaption>Mixed-source footage normalised to one consistent device profile in a single pass.</figcaption></figure>
+        <p class="result"><b>Result</b>An operator drops in a folder and gets consistent, publish-ready files back &mdash; no per-file work in a metadata editor.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Sanitize pass runs first, so nothing is written on top of stale or conflicting tags</li>
+            <li>Device profile keys live in one config file rather than hardcoded per run</li>
+            <li>MOV splicing and re-encode handled in the same pass, not a separate tool</li>
+            <li>Wrapped in a GUI with a one-click launcher so a non-technical operator runs it unsupervised</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Python 3, ExifTool, FFmpeg &middot; <b>Surface</b> desktop GUI + CLI</div>
+      </div>
+    </article>
+  </section>
+
+  <section id="capabilities">
+    <div class="sec-head"><h2>Capabilities</h2></div>
+    <div class="cap-wrap">
+      <table>
+        <thead><tr><th class="mono">Domain</th><th class="mono">What that covers</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Device orchestration</th><td>ADB over USB &middot; cloud device APIs &middot; slot-parallel workers &middot; resumable run state</td></tr>
+          <tr><th scope="row">Data pipelines</th><td>scheduled scrapers &middot; sheet &harr; database reconciliation &middot; backfills &middot; skip-lists &middot; retry policy</td></tr>
+          <tr><th scope="row">Internal dashboards</th><td>Django &middot; MongoDB &middot; admin views built to be embedded, not bolted on</td></tr>
+          <tr><th scope="row">Network infrastructure</th><td>proxy pool management &middot; rotation policy &middot; vendor API sync &middot; drift reporting</td></tr>
+          <tr><th scope="row">AI pipelines</th><td>batch generation APIs &middot; concurrency limits &middot; reference anchoring &middot; asset hand-off</td></tr>
+          <tr><th scope="row">Media processing</th><td>capture metadata rewriting &middot; video sanitizing &middot; splicing and re-encode</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="method">
+    <div class="sec-head"><h2>How I work</h2></div>
+    <div class="method">
+      <ol>
+        <li><code>barebones first</code><p><strong>You get the smallest thing that works, then we add only what you ask for.</strong> No speculative flags, no options nobody requested, no config for a case that hasn't happened yet.</p></li>
+        <li><code>session report</code><p><strong>Every working session ends with a written report.</strong> Grouped by area, bullet points, what changed &mdash; not how. You can forward it to someone who wasn't there.</p></li>
+        <li><code>project memory</code><p><strong>Decisions, lessons and open tasks live in the repo.</strong> Picking the project back up after two quiet weeks costs nothing, whether it's me or the next person.</p></li>
+        <li><code>inherit, don't rewrite</code><p><strong>Porting a working flow to a new backend means carrying the logic across.</strong> Rewrites are how you lose the nine edge cases that took a month to find.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="sec-head"><h2>About</h2></div>
+    <div class="about">
+      <ol class="path">
+        <li><span class="mono step">Started as</span>Social media VA &mdash; Instagram, Threads and Snapchat at scale</li>
+        <li><span class="mono step">The turn</span>Wrote an automation rather than keep checking one by one</li>
+        <li><span class="mono step">Now</span>Tools, automations and dashboards, built to order</li>
+      </ol>
+      <div class="about-body">
+        <p>I started as a social media VA, running Instagram, Threads and Snapchat accounts at scale. The job was checking things one by one, and I got tired of it &mdash; so I wrote something that did the checking for me. My boss saw it, liked it, and started handing me ideas instead of tasks. Automations, internal tools, dashboards. That has been the work ever since.</p>
+        <p>I'm a computer science undergrad, and I've been programming for a little over a year and a half. Everything on this page was built inside that window, which is the clearest thing I can tell you about how quickly I pick things up.</p>
+        <p>Coming from the VA side is what makes me useful rather than merely available: I've done the manual version of nearly everything I automate, so I know which edge cases actually bite and which ones only look important on paper.</p>
+        <p>I work solo &mdash; I designed, built and still maintain all of it. I lean on AI heavily to move fast, which is why a working version usually lands in days rather than weeks. It doesn't change who is accountable for the code.</p>
+        <p class="close">My hours are flexible and I'll overlap with whatever timezone you're in. And I don't stop at &ldquo;it can't be done&rdquo; &mdash; if there's a way through, I'll keep going until I find it. The stack on this page is where my edge is, but any well-defined programming project is worth a conversation.</p>
+        <p class="personal">Most weekends I'm on a road trip somewhere &mdash; youth is short and I'd rather spend it moving. Otherwise I'm repairing broken phones and PCs, which is the same instinct as the day job with a screwdriver instead of a terminal.</p>
+      </div>
+    </div>
+  </section>
+
+  <blockquote class="pull">
+    <p>&ldquo;Oh damn, you went above and beyond. Ya, this works.&rdquo;</p>
+    <cite>Operations lead &middot; social media agency</cite>
+  </blockquote>
+
+  <section id="start">
+    <div class="sec-head"><h2>Start here</h2></div>
+    <div class="cta">
+      <div>
+        <h3>Send me the messy version.</h3>
+        <p>The spreadsheet, the checklist, the thing someone does every morning. I'll tell you straight whether it's worth automating.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-solid" href="mailto:mcerroljuliano18@gmail.com?subject=Automation%20project">Email me</a>
+        <a class="btn btn-ghost" href="https://t.me/maki_84">Telegram</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="sec-head"><h2>Contact</h2></div>
+    <dl class="contact">
+      <div><dt class="mono">Email</dt><dd><a href="mailto:mcerroljuliano18@gmail.com">mcerroljuliano18@gmail.com</a><button class="copy-mail" type="button" id="copyMail">Copy</button></dd></div>
+      <div><dt class="mono">Telegram</dt><dd><a href="https://t.me/maki_84">@maki_84</a></dd></div>
+      <div><dt class="mono">Response</dt><dd>Within 12 hours</dd></div>
+    </dl>
+  </section>
+
+  <footer>
+    <p class="mono" style="letter-spacing:.06em;line-height:1.7;margin:0">Figures reflect real project scale. Client names and identifying details omitted.</p>
+  </footer>
+</main>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- theme toggle ---- */
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  function prefersDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  function isDark(){ var t = root.getAttribute('data-theme'); return t ? t === 'dark' : prefersDark(); }
+  function label(){ btn.textContent = isDark() ? 'Light' : 'Dark'; }
+  try { var stored = localStorage.getItem('maki-theme'); if(stored) root.setAttribute('data-theme', stored); } catch(e){}
+  label();
+  btn.addEventListener('click', function(){
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('maki-theme', next); } catch(e){}
+    label();
+  });
+
+  /* ---- fleet scheduler ---- */
+  var grid = document.getElementById('grid'), cells = [];
+  for(var i=0;i<120;i++){
+    var c = document.createElement('div');
+    c.className = 'cell';
+    c.setAttribute('data-s','idle');
+    c.setAttribute('data-slot','S'+String(i).padStart(3,'0'));
+    grid.appendChild(c); cells.push(c);
+  }
+  var probe = document.getElementById('probe');
+  var stateName = {idle:'idle',queued:'queued',run:'running',done:'done'};
+  grid.addEventListener('mouseover', function(e){
+    var c = e.target.closest('.cell'); if(!c) return;
+    probe.textContent = c.getAttribute('data-slot') + ' \u00b7 ' + stateName[c.getAttribute('data-s')];
+  });
+  grid.addEventListener('mouseleave', function(){ probe.innerHTML = '&nbsp;'; });
+  var order = ['idle','queued','run','done'];
+  function seed(){
+    cells.forEach(function(c){
+      var r = Math.random();
+      c.setAttribute('data-s', r < 0.10 ? 'run' : r < 0.38 ? 'done' : r < 0.5 ? 'queued' : 'idle');
+    });
+  }
+  seed();
+  if(!reduce){
+    setInterval(function(){
+      for(var k=0;k<7;k++){
+        var c = cells[(Math.random()*cells.length)|0];
+        var s = c.getAttribute('data-s');
+        c.setAttribute('data-s', order[(order.indexOf(s)+1) % order.length]);
+      }
+    }, 420);
+  }
+
+  /* ---- count-up figures ---- */
+  var figs = Array.prototype.slice.call(document.querySelectorAll('.fig b'));
+  figs.forEach(function(el){
+    var to = parseInt(el.getAttribute('data-to'),10), sfx = el.getAttribute('data-suffix') || '';
+    if(reduce){ el.textContent = to + sfx; return; }
+    var t0 = null, dur = 900;
+    function step(ts){
+      if(t0 === null) t0 = ts;
+      var p = Math.min((ts - t0)/dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(to * eased) + sfx;
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+
+  /* ---- work filters ---- */
+  var fbtns = Array.prototype.slice.call(document.querySelectorAll('#filters button'));
+  var units = Array.prototype.slice.call(document.querySelectorAll('.unit'));
+  fbtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var f = b.getAttribute('data-f');
+      fbtns.forEach(function(o){ o.setAttribute('aria-pressed', String(o === b)); });
+      var n = 0;
+      units.forEach(function(u){
+        var hide = f !== 'all' && u.getAttribute('data-d') !== f;
+        u.classList.toggle('is-hidden', hide);
+        if(!hide) n++;
+      });
+      document.getElementById('shown').textContent =
+        f === 'all' ? 'Showing all ' + n : 'Showing ' + n + ' of ' + units.length;
+    });
+  });
+
+  /* ---- technical detail drawers ---- */
+  document.querySelectorAll('.drawer-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var open = b.getAttribute('aria-expanded') === 'true';
+      b.setAttribute('aria-expanded', String(!open));
+      b.nextElementSibling.classList.toggle('open', !open);
+    });
+  });
+  /* ---- scroll progress ---- */
+  var bar = document.getElementById('progress');
+  function progress(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  progress();
+  window.addEventListener('scroll', progress, {passive:true});
+  window.addEventListener('resize', progress);
+
+  /* ---- rail scroll-spy ---- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('#rail a'));
+  var targets = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function spy(){
+    var best = 0, mid = Math.max(120, window.innerHeight * 0.3);
+    targets.forEach(function(t, i){ if(t && t.getBoundingClientRect().top <= mid) best = i; });
+    // a short final section can never cross the threshold - claim it at the page bottom
+    if(window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4)
+      best = links.length - 1;
+    links.forEach(function(a, i){
+      if(i === best) a.setAttribute('aria-current','true'); else a.removeAttribute('aria-current');
+    });
+  }
+  spy();
+  window.addEventListener('scroll', spy, {passive:true});
+  window.addEventListener('resize', spy);
+
+  /* ---- copy email ---- */
+  var cm = document.getElementById('copyMail');
+  cm.addEventListener('click', function(){
+    function done(word){
+      cm.textContent = word;
+      setTimeout(function(){ cm.textContent = 'Copy'; }, 1400);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText('mcerroljuliano18@gmail.com')
+        .then(function(){ done('Copied'); }, function(){ done('Failed'); });
+    } else { done('Failed'); }
+  });
+})();
+</script>
+
+</body>
+</html>
