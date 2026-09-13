@@ -552,6 +552,7 @@
   </footer>
 </main>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (function(){
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -681,6 +682,18 @@
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){ toast.classList.remove('show'); }, 2200);
   }
+  /* CTA: copy too, but let the mailto: fire for anyone who has a mail client */
+  var ctaMail=document.querySelector('.cta a[href^="mailto:"]');
+  if(ctaMail){
+    ctaMail.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText('mcerroljuliano18@gmail.com').then(
+          function(){ flashToast('Email copied to clipboard'); },
+          function(){}
+        );
+      }
+    });
+  }
   document.querySelectorAll('.contact a[href^="mailto:"]').forEach(function(a){
     a.addEventListener('click', function(e){
       if(!(navigator.clipboard && navigator.clipboard.writeText)) return;
@@ -694,6 +707,5 @@
 })();
 </script>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
