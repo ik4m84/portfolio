@@ -233,10 +233,12 @@
   .contact .alt{font-size:12px}
   .contact .alt a{color:var(--muted)}
   .contact .alt a:hover{color:var(--accent)}
-  .copy-mail{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
-    background:none;border:1px solid var(--rule);color:var(--muted);padding:3px 7px;cursor:pointer;
-    border-radius:2px;transition:border-color .18s,color .18s}
-  .copy-mail:hover{border-color:var(--accent);color:var(--accent)}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,14px);
+    background:var(--ink);color:var(--paper);border-left:3px solid var(--accent);
+    font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    padding:12px 18px;border-radius:2px;opacity:0;pointer-events:none;z-index:30;
+    transition:opacity .22s ease,transform .22s ease;max-width:calc(100vw - 40px)}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
 
   footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--rule);color:var(--muted);max-width:64ch}
   a{color:var(--accent)}
@@ -539,7 +541,7 @@
   <section id="contact">
     <div class="sec-head"><h2>Contact</h2></div>
     <dl class="contact">
-      <div><dt class="mono">Email</dt><dd><a href="mailto:mcerroljuliano18@gmail.com">mcerroljuliano18@gmail.com</a><button class="copy-mail" type="button" id="copyMail">Copy</button></dd><dd class="alt"><a href="mailto:mcerroljuliano@gmail.com">mcerroljuliano@gmail.com</a></dd></div>
+      <div><dt class="mono">Email</dt><dd><a href="mailto:mcerroljuliano18@gmail.com" title="Click to copy">mcerroljuliano18@gmail.com</a></dd><dd class="alt"><a href="mailto:mcerroljuliano@gmail.com" title="Click to copy">mcerroljuliano@gmail.com</a></dd></div>
       <div><dt class="mono">Telegram</dt><dd><a href="https://t.me/maki_84">@maki_84</a></dd></div>
       <div><dt class="mono">Response</dt><dd>Within 12 hours</dd></div>
     </dl>
@@ -671,20 +673,27 @@
   window.addEventListener('scroll', spy, {passive:true});
   window.addEventListener('resize', spy);
 
-  /* ---- copy email ---- */
-  var cm = document.getElementById('copyMail');
-  cm.addEventListener('click', function(){
-    function done(word){
-      cm.textContent = word;
-      setTimeout(function(){ cm.textContent = 'Copy'; }, 1400);
-    }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText('mcerroljuliano18@gmail.com')
-        .then(function(){ done('Copied'); }, function(){ done('Failed'); });
-    } else { done('Failed'); }
+  /* ---- click an email to copy it ---- */
+  var toast=document.getElementById('toast'), toastTimer;
+  function flashToast(msg){
+    toast.textContent=msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){ toast.classList.remove('show'); }, 2200);
+  }
+  document.querySelectorAll('.contact a[href^="mailto:"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      if(!(navigator.clipboard && navigator.clipboard.writeText)) return;
+      e.preventDefault();
+      navigator.clipboard.writeText(a.textContent.trim()).then(
+        function(){ flashToast('Email copied to clipboard'); },
+        function(){ flashToast('Could not copy'); }
+      );
+    });
   });
 })();
 </script>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
