@@ -193,6 +193,7 @@
   .viz .bx{fill:none;stroke:var(--rule);stroke-width:1}
   .viz .ln{stroke:var(--rule);stroke-width:1;fill:none}
   .viz .ah{fill:var(--rule)}
+  .viz .dash{fill:none;stroke:var(--rule);stroke-width:1;stroke-dasharray:4 3}
   .viz .acc{stroke:var(--accent)}
   .viz .acf{fill:var(--accent)}
   .viz .t{fill:currentColor;font-family:var(--mono);font-size:11px}
@@ -321,7 +322,7 @@
   <section id="work">
     <div class="sec-head"><h2>Selected work</h2></div>
     <div class="filters" id="filters" role="group" aria-label="Filter work by domain">
-      <button type="button" data-f="all" aria-pressed="true">All seven</button>
+      <button type="button" data-f="all" aria-pressed="true">All eight</button>
       <button type="button" data-f="mobile" aria-pressed="false">Mobile-orch</button>
       <button type="button" data-f="data" aria-pressed="false">Data-pipe</button>
       <button type="button" data-f="dash" aria-pressed="false">Dashboard</button>
@@ -329,7 +330,7 @@
       <button type="button" data-f="ai" aria-pressed="false">AI-pipe</button>
       <button type="button" data-f="media" aria-pressed="false">Media</button>
     </div>
-    <p class="shown" id="shown">Showing all 7</p>
+    <p class="shown" id="shown">Showing all 8</p>
 
     <article class="unit" data-d="mobile">
       <div class="mono tag">Mobile-orch</div>
@@ -469,6 +470,25 @@
         <div class="spec"><b>Stack</b> Python 3, ExifTool, FFmpeg &middot; <b>Surface</b> desktop GUI + CLI</div>
       </div>
     </article>
+    <article class="unit" data-d="media">
+      <div class="mono tag">Media</div>
+      <div>
+        <h3>Self-Hosted Video Render Pipeline</h3>
+        <p>A self-hosted n8n instance rebuilt as a video factory: FFmpeg and a text-render font are layered into the container image itself, so a workflow can cut, caption and encode finished reels without handing off to a second service.</p>
+        <figure class="viz"><svg viewBox="0 0 620 124" role="img" aria-label="Input folders feed an n8n workflow that drives FFmpeg inside a single container image, writing numbered reels to output folders."><rect class="bx" x="0" y="38" width="118" height="30"/><text class="s" x="59" y="56.5" text-anchor="middle">input / model</text><line class="ln" x1="118" y1="53" x2="162" y2="53"/><polygon class="ah" points="162,49.5 162,56.5 168,53"/><rect class="dash" x="176" y="8" width="172" height="96"/><rect class="bx" x="192" y="24" width="140" height="28"/><text class="s" x="262" y="41.5" text-anchor="middle">n8n workflow</text><line class="ln" x1="262" y1="52" x2="262" y2="62"/><polygon class="ah" points="258.5,62 265.5,62 262,68"/><rect class="bx acc" x="192" y="68" width="140" height="28"/><text class="s acct2" x="262" y="85.5" text-anchor="middle">FFmpeg</text><text class="acct" x="262" y="116" text-anchor="middle">one image, no service hop</text><line class="ln" x1="348" y1="53" x2="392" y2="53"/><polygon class="ah" points="392,49.5 392,56.5 398,53"/><rect class="bx" x="406" y="38" width="130" height="30"/><text class="s" x="471" y="56.5" text-anchor="middle">output / model</text><text class="s" x="546" y="57">reel_0001..N</text></svg><figcaption>n8n and FFmpeg ship in one image, so a render never leaves the workflow.</figcaption></figure>
+        <p class="result"><b>Result</b>Drop clips and audio into a folder and get numbered, publish-ready reels out &mdash; batch output instead of editing one video at a time.</p>
+        <button class="drawer-btn" type="button" aria-expanded="false">Technical detail <span class="chev">+</span></button>
+        <div class="drawer">
+          <ul>
+            <li>Static FFmpeg and ffprobe builds copied into the n8n image, plus a system font for burned-in text</li>
+            <li>Task and request timeouts raised from 60s to 3600s so long encodes are not killed mid-render</li>
+            <li>Node payload ceiling raised to ~1&nbsp;GB so full-length video passes between steps</li>
+            <li>Per-subject input and output folders mounted as volumes &mdash; adding one is a directory, not a config change</li>
+          </ul>
+        </div>
+        <div class="spec"><b>Stack</b> Docker, n8n, FFmpeg &middot; <b>Surface</b> self-hosted workflow UI</div>
+      </div>
+    </article>
   </section>
 
   <section id="capabilities">
@@ -482,7 +502,7 @@
           <tr><th scope="row">Internal dashboards</th><td>Django &middot; MongoDB &middot; admin views built to be embedded, not bolted on</td></tr>
           <tr><th scope="row">Network infrastructure</th><td>proxy pool management &middot; rotation policy &middot; vendor API sync &middot; drift reporting</td></tr>
           <tr><th scope="row">AI pipelines</th><td>batch generation APIs &middot; concurrency limits &middot; reference anchoring &middot; asset hand-off</td></tr>
-          <tr><th scope="row">Media processing</th><td>capture metadata rewriting &middot; video sanitizing &middot; splicing and re-encode</td></tr>
+          <tr><th scope="row">Media processing</th><td>capture metadata rewriting &middot; video sanitizing &middot; splicing and re-encode &middot; containerised batch render</td></tr>
         </tbody>
       </table>
     </div>
